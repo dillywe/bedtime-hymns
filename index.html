@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bedtime Hymns" />
+  <meta name="theme-color" content="#1a1208" />
+  <link rel="manifest" href="./manifest.json" />
+  <title>Bedtime Hymns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Cinzel:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:        #110e07;
+      --surface:   #1e1608;
+      --card:      #261c0a;
+      --border:    #3d2e12;
+      --gold:      #c9943a;
+      --gold-soft: #e8c06a;
+      --cream:     #f0e4c4;
+      --muted:     #9e8860;
+      --flame:     #e8732a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'EB Garamond', Georgia, serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Starfield background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 15% 20%, rgba(255,240,200,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 72% 8%,  rgba(255,240,200,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 40% 55%, rgba(255,240,200,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 42%, rgba(255,240,200,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5%  80%, rgba(255,240,200,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 60% 90%, rgba(255,240,200,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 92% 75%, rgba(255,240,200,0.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 30% 12%, rgba(255,240,200,0.7) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 55% 35%, rgba(255,240,200,0.5) 0%, transparent 100%),
+        radial-gradient(2px 2px at 80% 18%,  rgba(255,255,220,0.8) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Candle glow ── */
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 260px; height: 260px;
+      background: radial-gradient(ellipse at center, rgba(232,115,42,0.18) 0%, rgba(201,148,58,0.08) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: flicker 4s ease-in-out infinite;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+      25%       { opacity: 0.85; transform: translateX(-50%) scale(0.97); }
+      50%       { opacity: 0.95; transform: translateX(-50%) scale(1.02); }
+      75%       { opacity: 0.9;  transform: translateX(-50%) scale(0.99); }
+    }
+
+    /* ── Layout ── */
+    #app {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: env(safe-area-inset-top, 16px) 24px 0;
+      padding-top: max(env(safe-area-inset-top, 0px), 20px);
+      text-align: center;
+    }
+
+    .candle-icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 4px;
+      animation: flicker-icon 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px rgba(232,115,42,0.6));
+    }
+    @keyframes flicker-icon {
+      0%,100% { filter: drop-shadow(0 0 8px rgba(232,115,42,0.6)); }
+      50%      { filter: drop-shadow(0 0 14px rgba(232,115,42,0.9)); }
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-weight: 400;
+      font-size: clamp(1.3rem, 5vw, 1.7rem);
+      color: var(--gold-soft);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Search ── */
+    .search-wrap {
+      padding: 20px 20px 8px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 16px 11px 40px;
+      color: var(--cream);
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--gold); }
+
+    .search-wrap { position: relative; }
+    .search-icon {
+      position: absolute;
+      left: 34px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    /* ── Hymn list ── */
+    #list-view {
+      flex: 1;
+      padding: 8px 20px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .hymn-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .hymn-card:active { transform: scale(0.98); }
+    .hymn-card:hover  { border-color: var(--gold); background: #2e2010; }
+
+    .hymn-number {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      color: var(--gold);
+      min-width: 22px;
+      text-align: right;
+      opacity: 0.7;
+    }
+
+    .hymn-info { flex: 1; }
+
+    .hymn-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      color: var(--gold-soft);
+      font-weight: 400;
+      line-height: 1.3;
+    }
+
+    .hymn-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    .hymn-arrow {
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: color 0.2s;
+    }
+    .hymn-card:hover .hymn-arrow { color: var(--gold); }
+
+    /* ── Detail view ── */
+    #detail-view {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .detail-header {
+      padding: max(env(safe-area-inset-top, 0px), 16px) 20px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .back-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--gold);
+      padding: 6px 12px;
+      font-family: 'EB Garamond', serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .back-btn:hover { background: var(--card); border-color: var(--gold); }
+
+    .detail-title-wrap { flex: 1; }
+
+    .detail-hymn-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.9rem, 4vw, 1.1rem);
+      color: var(--gold-soft);
+      font-weight: 400;
+      line-height: 1.3;
+    }
+
+    .detail-hymn-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .lyrics-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px 60px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .verse {
+      margin-bottom: 28px;
+    }
+
+    .verse-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      color: var(--gold);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .verse-text {
+      font-size: clamp(1.05rem, 4vw, 1.2rem);
+      line-height: 1.85;
+      color: var(--cream);
+      white-space: pre-line;
+    }
+
+    .chorus .verse-label { color: var(--flame); }
+    .chorus .verse-text  { color: #f5edda; font-style: italic; }
+
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 28px;
+    }
+
+    /* ── No results ── */
+    .no-results {
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+      padding: 40px 20px;
+      font-size: 1rem;
+    }
+
+    /* ── Install banner ── */
+    #install-banner {
+      display: none;
+      margin: 0 20px 10px;
+      background: var(--card);
+      border: 1px solid var(--gold);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: var(--cream);
+      align-items: center;
+      gap: 10px;
+    }
+    #install-banner.show { display: flex; }
+    #install-btn {
+      background: var(--gold);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #dismiss-install {
+      background: none; border: none;
+      color: var(--muted); cursor: pointer; font-size: 1rem; margin-left: auto;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══ LIST VIEW ═══ -->
+  <div id="list-view-wrapper">
+    <header>
+      <span class="candle-icon">🕯️</span>
+      <h1>Bedtime Hymns</h1>
+      <p class="subtitle">Sing to the children before sleep</p>
+    </header>
+
+    <div id="install-banner">
+      <span>📱 Add to Home Screen for offline use</span>
+      <button id="install-btn">Add</button>
+      <button id="dismiss-install">✕</button>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search" type="search" placeholder="Search hymns…" autocomplete="off" />
+    </div>
+
+    <div id="list-view"></div>
+  </div>
+
+  <!-- ═══ DETAIL VIEW ═══ -->
+  <div id="detail-view">
+    <div class="detail-header">
+      <button class="back-btn" id="back-btn">← Hymns</button>
+      <div class="detail-title-wrap">
+        <div class="detail-hymn-title" id="detail-title"></div>
+        <div class="detail-hymn-meta" id="detail-meta"></div>
+      </div>
+    </div>
+    <div class="lyrics-scroll" id="lyrics-container"></div>
+  </div>
+
+</div>
+
+<script>
+const HYMNS = [
+  {
+    title: "This Is My Father's World",
+    author: "Maltbie D. Babcock, 1901",
+    verses: [
+      { label: "Verse 1", text: "This is my Father's world,\nAnd to my listening ears\nAll nature sings, and round me rings\nThe music of the spheres.\nThis is my Father's world:\nI rest me in the thought\nOf rocks and trees, of skies and seas;\nHis hand the wonders wrought." },
+      { label: "Verse 2", text: "This is my Father's world,\nThe birds their carols raise,\nThe morning light, the lily white,\nDeclare their Maker's praise.\nThis is my Father's world:\nHe shines in all that's fair;\nIn the rustling grass I hear Him pass;\nHe speaks to me everywhere." },
+      { label: "Verse 3", text: "This is my Father's world,\nO let me ne'er forget\nThat though the wrong seems oft so strong,\nGod is the Ruler yet.\nThis is my Father's world:\nThe battle is not done;\nJesus who died shall be satisfied,\nAnd earth and heaven be one." }
+    ]
+  },
+  {
+    title: "A Mighty Fortress Is Our God",
+    author: "Martin Luther, c. 1529 • Tr. Frederick Hedge, 1853",
+    verses: [
+      { label: "Verse 1", text: "A mighty fortress is our God,\nA bulwark never failing;\nOur helper He, amid the flood\nOf mortal ills prevailing.\nFor still our ancient foe\nDoth seek to work us woe;\nHis craft and pow'r are great,\nAnd, armed with cruel hate,\nOn earth is not his equal." },
+      { label: "Verse 2", text: "Did we in our own strength confide,\nOur striving would be losing;\nWere not the right Man on our side,\nThe Man of God's own choosing.\nDost ask who that may be?\nChrist Jesus, it is He;\nLord Sabaoth, His name,\nFrom age to age the same,\nAnd He must win the battle." },
+      { label: "Verse 3", text: "And though this world, with devils filled,\nShould threaten to undo us,\nWe will not fear, for God hath willed\nHis truth to triumph through us.\nThe Prince of Darkness grim,\nWe tremble not for him;\nHis rage we can endure,\nFor lo, his doom is sure,\nOne little word shall fell him." },
+      { label: "Verse 4", text: "That word above all earthly pow'rs,\nNo thanks to them, abideth;\nThe Spirit and the gifts are ours\nThrough Him who with us sideth.\nLet goods and kindred go,\nThis mortal life also;\nThe body they may kill;\nGod's truth abideth still,\nHis kingdom is forever." }
+    ]
+  },
+  {
+    title: "Holy, Holy, Holy",
+    author: "Reginald Heber, 1826",
+    verses: [
+      { label: "Verse 1", text: "Holy, holy, holy! Lord God Almighty!\nEarly in the morning our song shall rise to Thee;\nHoly, holy, holy, merciful and mighty!\nGod in three Persons, blessed Trinity!" },
+      { label: "Verse 2", text: "Holy, holy, holy! All the saints adore Thee,\nCasting down their golden crowns around the glassy sea;\nCherubim and seraphim falling down before Thee,\nWhich wert, and art, and evermore shalt be." },
+      { label: "Verse 3", text: "Holy, holy, holy! Though the darkness hide Thee,\nThough the eye of sinful man Thy glory may not see;\nOnly Thou art holy; there is none beside Thee,\nPerfect in pow'r, in love, and purity." },
+      { label: "Verse 4", text: "Holy, holy, holy! Lord God Almighty!\nAll Thy works shall praise Thy name, in earth, and sky, and sea;\nHoly, holy, holy; merciful and mighty!\nGod in three Persons, blessed Trinity!" }
+    ]
+  },
+  {
+    title: "Amazing Grace",
+    author: "John Newton, 1779",
+    verses: [
+      { label: "Verse 1", text: "Amazing grace! How sweet the sound\nThat saved a wretch like me!\nI once was lost, but now am found;\nWas blind, but now I see." },
+      { label: "Verse 2", text: "'Twas grace that taught my heart to fear,\nAnd grace my fears relieved;\nHow precious did that grace appear\nThe hour I first believed." },
+      { label: "Verse 3", text: "Through many dangers, toils and snares,\nI have already come;\n'Tis grace hath brought me safe thus far,\nAnd grace will lead me home." },
+      { label: "Verse 4", text: "The Lord has promised good to me,\nHis word my hope secures;\nHe will my shield and portion be,\nAs long as life endures." },
+      { label: "Verse 5", text: "Yea, when this flesh and heart shall fail,\nAnd mortal life shall cease,\nI shall possess, within the veil,\nA life of joy and peace." },
+      { label: "Verse 6", text: "When we've been there ten thousand years,\nBright shining as the sun,\nWe've no less days to sing God's praise\nThan when we'd first begun." }
+    ]
+  },
+  {
+    title: "Be Thou My Vision",
+    author: "Irish, c. 8th century • Tr. Mary Byrne, 1905 • Versified Eleanor Hull, 1912",
+    verses: [
+      { label: "Verse 1", text: "Be Thou my vision, O Lord of my heart;\nNaught be all else to me, save that Thou art.\nThou my best thought, by day or by night,\nWaking or sleeping, Thy presence my light." },
+      { label: "Verse 2", text: "Be Thou my wisdom, and Thou my true word;\nI ever with Thee and Thou with me, Lord;\nThou my great Father, I Thy true son;\nThou in me dwelling, and I with Thee one." },
+      { label: "Verse 3", text: "Be Thou my battle shield, sword for the fight;\nBe Thou my dignity, Thou my delight;\nThou my soul's shelter, Thou my high tower:\nRaise Thou me heavenward, O Power of my power." },
+      { label: "Verse 4", text: "Riches I heed not, nor man's empty praise,\nThou mine inheritance, now and always:\nThou and Thou only, first in my heart,\nHigh King of heaven, my treasure Thou art." },
+      { label: "Verse 5", text: "High King of heaven, my victory won,\nMay I reach heaven's joys, O bright heaven's Sun!\nHeart of my own heart, whatever befall,\nStill be my vision, O Ruler of all." }
+    ]
+  },
+  {
+    title: "Come Thou Fount of Every Blessing",
+    author: "Robert Robinson, 1758",
+    verses: [
+      { label: "Verse 1", text: "Come, Thou Fount of every blessing,\nTune my heart to sing Thy grace;\nStreams of mercy, never ceasing,\nCall for songs of loudest praise.\nTeach me some melodious sonnet,\nSung by flaming tongues above.\nPraise the mount! I'm fixed upon it,\nMount of Thy redeeming love." },
+      { label: "Verse 2", text: "Here I raise my Ebenezer;\nHither by Thy help I've come;\nAnd I hope, by Thy good pleasure,\nSafely to arrive at home.\nJesus sought me when a stranger,\nWandering from the fold of God;\nHe, to rescue me from danger,\nInterposed His precious blood." },
+      { label: "Verse 3", text: "O to grace how great a debtor\nDaily I'm constrained to be!\nLet Thy goodness, like a fetter,\nBind my wandering heart to Thee.\nProne to wander, Lord, I feel it,\nProne to leave the God I love;\nHere's my heart, O take and seal it,\nSeal it for Thy courts above." }
+    ]
+  }
+];
+
+// ── State ──
+let deferredPrompt = null;
+
+// ── DOM ──
+const listEl       = document.getElementById('list-view');
+const listWrapper  = document.getElementById('list-view-wrapper');
+const detailView   = document.getElementById('detail-view');
+const searchEl     = document.getElementById('search');
+const detailTitle  = document.getElementById('detail-title');
+const detailMeta   = document.getElementById('detail-meta');
+const lyricsEl     = document.getElementById('lyrics-container');
+const backBtn      = document.getElementById('back-btn');
+const installBanner = document.getElementById('install-banner');
+const installBtn   = document.getElementById('install-btn');
+const dismissBtn   = document.getElementById('dismiss-install');
+
+// ── Render list ──
+function renderList(query = '') {
+  const q = query.toLowerCase().trim();
+  const filtered = HYMNS.filter(h =>
+    !q ||
+    h.title.toLowerCase().includes(q) ||
+    h.author.toLowerCase().includes(q) ||
+    h.verses.some(v => v.text.toLowerCase().includes(q))
+  );
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<p class="no-results">No hymns found</p>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map((hymn, i) => {
+    const idx = HYMNS.indexOf(hymn);
+    return `
+      <div class="hymn-card" data-idx="${idx}" role="button" tabindex="0">
+        <span class="hymn-number">${String(i + 1).padStart(2, '0')}</span>
+        <div class="hymn-info">
+          <div class="hymn-title">${hymn.title}</div>
+          <div class="hymn-meta">${hymn.author.split('•')[0].trim()}</div>
+        </div>
+        <span class="hymn-arrow">▶</span>
+      </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.hymn-card').forEach(card => {
+    card.addEventListener('click', () => openHymn(+card.dataset.idx));
+    card.addEventListener('keydown', e => e.key === 'Enter' && openHymn(+card.dataset.idx));
+  });
+}
+
+// ── Open hymn detail ──
+function openHymn(idx) {
+  const hymn = HYMNS[idx];
+  detailTitle.textContent = hymn.title;
+  detailMeta.textContent  = hymn.author;
+
+  lyricsEl.innerHTML = hymn.verses.map((v, i) => {
+    const isChorus = v.label.toLowerCase().includes('chorus') || v.label.toLowerCase().includes('refrain');
+    return `
+      ${i > 0 ? '<div class="divider"></div>' : ''}
+      <div class="verse${isChorus ? ' chorus' : ''}">
+        <div class="verse-label">${v.label}</div>
+        <div class="verse-text">${v.text}</div>
+      </div>`;
+  }).join('');
+
+  listWrapper.style.display = 'none';
+  detailView.style.display  = 'flex';
+  lyricsEl.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+// ── Back ──
+backBtn.addEventListener('click', () => {
+  detailView.style.display  = 'none';
+  listWrapper.style.display = 'block';
+});
+
+// ── Search ──
+searchEl.addEventListener('input', () => renderList(searchEl.value));
+
+// ── PWA install ──
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.classList.add('show');
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBanner.classList.remove('show');
+});
+
+dismissBtn.addEventListener('click', () => installBanner.classList.remove('show'));
+
+// ── Service worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(console.error);
+}
+
+// ── Init ──
+renderList();
+</script>
+</body>
+</html>
